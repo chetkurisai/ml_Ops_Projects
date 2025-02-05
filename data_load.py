@@ -7,11 +7,16 @@ import numpy as np
 import os
 
 
+BUCKET_NAME = "ml_bucket_p1"
+FILE_NAME = "BostonHousing.csv"
+GCS_PATH = f'gs://{BUCKET_NAME}/{FILE_NAME}'
+
+print(f"Loading data from {GCS_PATH}")
 
 # Load dataset
-df_path = r"D:\ml_prjects\Data Sets\BostonHousing.csv"
+# df_path = r"D:\ml_prjects\Data Sets\BostonHousing.csv"
 
-if not os.path.exists(df_path):
+if not os.path.exists(GCS_PATH):
     raise FileNotFoundError(f"Dataset not found at {df_path}")
 
 df = pd.read_csv(df_path)
@@ -34,7 +39,7 @@ X_train_processed = preprocessor.fit_transform(X_train)
 X_test_processed = preprocessor.transform(X_test)
 
 # Save preprocessor and data
-output_dir = r"D:\ml_prjects\Projects\BostonHousing_prediction"
+output_dir = "data/processed_sai"
 os.makedirs(output_dir, exist_ok=True)
 
 joblib.dump(preprocessor, os.path.join(output_dir, "preprocessor.joblib"))
