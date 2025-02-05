@@ -17,9 +17,9 @@ print(f"Loading data from {GCS_PATH}")
 # df_path = r"D:\ml_prjects\Data Sets\BostonHousing.csv"
 
 if not os.path.exists(GCS_PATH):
-    raise FileNotFoundError(f"Dataset not found at {df_path}")
+    raise FileNotFoundError(f"Dataset not found at {GCS_PATH}")
 
-df = pd.read_csv(df_path)
+df = pd.read_csv(GCS_PATH)
 
 # Define features and target
 X = df.drop(columns=["medv"])
