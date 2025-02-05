@@ -9,7 +9,7 @@ import os
 
 BUCKET_NAME = "ml_bucket_p1"
 FILE_NAME = "BostonHousing.csv"
-GCS_PATH = f'gs://{BUCKET_NAME}/{FILE_NAME}'
+GCS_PATH = f"gs://{BUCKET_NAME}/{FILE_NAME}"
 
 print(f"Loading data from {GCS_PATH}")
 
