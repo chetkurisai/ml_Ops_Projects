@@ -24,6 +24,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          pip install -r requirements.txt
           pip install fsspec gcsfs
           pip install pandas google-cloud-bigquery pyarrow
 
