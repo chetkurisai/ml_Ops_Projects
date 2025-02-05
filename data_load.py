@@ -53,6 +53,6 @@ np.save(os.path.join(output_dir, "y_test.npy"), y_test.values)
 DATASET_ID = "house_price"
 TABLE_NAME = "price_table"
 
-TABLE_ID = 'mlflow-0438.house_price.price_table
+TABLE_ID = f'{DATASET_ID}.{TABLE_NAME}'
 
 print("Data preprocessing complete.")
