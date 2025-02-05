@@ -49,4 +49,10 @@ np.save(os.path.join(output_dir, "y_train.npy"), y_train.values)
 np.save(os.path.join(output_dir, "X_test.npy"), X_test_processed)
 np.save(os.path.join(output_dir, "y_test.npy"), y_test.values)
 
+
+DATASET_ID = "house_price"
+TABLE_NAME = "price_table"
+
+TABLE_ID = 'mlflow-0438.house_price.price_table
+
 print("Data preprocessing complete.")
