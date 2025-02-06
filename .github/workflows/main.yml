@@ -66,6 +66,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas scikit-learn joblib numpy streamlit
           pip install db-dtypes google-cloud-bigquery[pandas]
+          pip install gcsfs
 
       - name: Run Streamlit App
-        run: streamlit run src/app.py
+        run: streamlit run app.py
