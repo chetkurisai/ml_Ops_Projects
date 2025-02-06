@@ -68,5 +68,9 @@ jobs:
           pip install db-dtypes
           pip install google-cloud-bigquery[pandas]
 
+      - name: Install BigQuery dependencies
+        run: |
+          pip install google-cloud-bigquery[pandas]
+
       - name: Run Streamlit App
         run: streamlit run src/app.py
