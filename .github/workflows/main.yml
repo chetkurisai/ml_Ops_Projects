@@ -24,9 +24,9 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install -r requirements.txt
-          pip install fsspec gcsfs
-          pip install pandas google-cloud-bigquery pyarrow
+          pip install --upgrade pip
+          pip install -r requirements.txt  # Ensure all dependencies from requirements.txt are installed
+          pip install fsspec gcsfs pandas google-cloud-bigquery pyarrow db-dtypes
 
       - name: Authenticate with Google Cloud
         run: |
@@ -65,12 +65,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pandas scikit-learn joblib numpy streamlit
-          pip install db-dtypes
-          pip install google-cloud-bigquery[pandas]
-
-      - name: Install BigQuery dependencies
-        run: |
-          pip install google-cloud-bigquery[pandas]
+          pip install db-dtypes google-cloud-bigquery[pandas]
 
       - name: Run Streamlit App
         run: streamlit run src/app.py
