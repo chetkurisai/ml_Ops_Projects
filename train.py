@@ -1,47 +1,53 @@
 from sklearn.ensemble import RandomForestRegressor
 import joblib
-import argparse
 import os
 import numpy as np
-import gcsfs  # Import GCS File System
+from google.cloud import bigquery, storage
+import pandas as pd
+import argparse
+import gcsfs
 
-def train_and_save_model(X_train, y_train, model_output_path):
-    model = RandomForestRegressor(random_state=42)
-    model.fit(X_train, y_train)
+# GCP Configuration
+PROJECT_ID = "mlflow-0438"
+DATASET_ID = "house_price"
+TABLE_NAME = "price_table"
+BUCKET_NAME = "ml_bucket_p1"
+MODEL_OUTPUT_PATH = f"gs://{BUCKET_NAME}/model"
 
-    # Ensure the model directory exists
-    os.makedirs(model_output_path, exist_ok=True)
+# Initialize BigQuery Client
+client = bigquery.Client()
 
-    # Save the trained model
-    model_path = os.path.join(model_output_path, 'boston_housing_model.joblib')
-    joblib.dump(model, model_path)
+# Load training data from BigQuery
+QUERY = f"SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.{TABLE_NAME}`"
+df_train = client.query(QUERY).to_dataframe()
 
-    print(f"Model saved to {model_path}")
+# Extract features and target
+X_train = df_train.drop(columns=["medv"])
+y_train = df_train["medv"]
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model-output-path', dest='model_output_path',
-                        default='gs://ml_bucket_p1/model', type=str, 
-                        help='Path to save the trained model in GCS')
-    args = parser.parse_args()
+# Load preprocessor from GCS
+fs = gcsfs.GCSFileSystem()
+PREPROCESSOR_PATH = f"gs://{BUCKET_NAME}/preprocessor.joblib"
 
-    # GCS Bucket Information
-    BUCKET_NAME = "ml_bucket_p1"
-    DATA_PATH = f"gs://{BUCKET_NAME}/processed_data"  # Updated to your GCS folder
+with fs.open(PREPROCESSOR_PATH, "rb") as f:
+    preprocessor = joblib.load(f)
 
-    # Use GCS File System to Load Data
-    fs = gcsfs.GCSFileSystem()
+# Apply preprocessing
+X_train_processed = preprocessor.transform(X_train)
 
-    with fs.open(os.path.join(DATA_PATH, "X_train.npy"), "rb") as f:
-        X_train = np.load(f)
+# Train model
+model = RandomForestRegressor(random_state=42)
+model.fit(X_train_processed, y_train)
 
-    with fs.open(os.path.join(DATA_PATH, "y_train.npy"), "rb") as f:
-        y_train = np.load(f)
+# Save model locally
+os.makedirs("model", exist_ok=True)
+model_path = "model/boston_housing_model.joblib"
+joblib.dump(model, model_path)
 
-    # Train and save the model
-    train_and_save_model(X_train, y_train, args.model_output_path)
+# Upload model to GCS
+storage_client = storage.Client()
+bucket = storage_client.bucket(BUCKET_NAME)
+blob = bucket.blob("model/boston_housing_model.joblib")
+blob.upload_from_filename(model_path)
 
-    # Upload the model to GCS
-    model_gcs_path = os.path.join(args.model_output_path, "boston_housing_model.joblib")
-    fs.put("boston_housing_model.joblib", model_gcs_path)
-    print(f"Model uploaded to {model_gcs_path}")
+print(f"Model trained and uploaded to {MODEL_OUTPUT_PATH}/boston_housing_model.joblib")
