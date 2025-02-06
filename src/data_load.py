@@ -38,18 +38,22 @@ preprocessor = ColumnTransformer(
 X_train_processed = preprocessor.fit_transform(X_train)
 X_test_processed = preprocessor.transform(X_test)
 
-# Save preprocessor and data
+# Save preprocessor and data locally
 output_dir = "data/processed_sai"
 os.makedirs(output_dir, exist_ok=True)
 
-joblib.dump(preprocessor, os.path.join(output_dir, "preprocessor.joblib"))
+# Saving preprocessor locally
+preprocessor_path = os.path.join(output_dir, "preprocessor.joblib")
+joblib.dump(preprocessor, preprocessor_path)
 
+# Saving processed data locally
 np.save(os.path.join(output_dir, "X_train.npy"), X_train_processed)
 np.save(os.path.join(output_dir, "y_train.npy"), y_train.values)
 np.save(os.path.join(output_dir, "X_test.npy"), X_test_processed)
 np.save(os.path.join(output_dir, "y_test.npy"), y_test.values)
 
 print("Data preprocessing complete.")
+print(f"Preprocessor saved locally at {preprocessor_path}")
 
 ### === Upload Processed Data to BigQuery === ###
 
@@ -81,3 +85,19 @@ try:
     print(f"Data successfully uploaded to BigQuery table {TABLE_ID}")
 except Exception as e:
     print(f"Failed to upload data to BigQuery. Error: {e}")
+
+### === Optional: Upload Preprocessor to Google Cloud Storage === ###
+
+# GCS details for storing the preprocessor
+GCS_FS = gcsfs.GCSFileSystem(project="mlflow-0438")  # Replace with your actual project ID
+GCS_PREPROCESSOR_PATH = f"gs://{BUCKET_NAME}/preprocessor.joblib"
+
+# Upload preprocessor to GCS
+try:
+    with GCS_FS.open(GCS_PREPROCESSOR_PATH, 'wb') as f:
+        joblib.dump(preprocessor, f)
+    print(f"Preprocessor uploaded to GCS at {GCS_PREPROCESSOR_PATH}")
+except Exception as e:
+    print(f"Failed to upload preprocessor to GCS. Error: {e}")
+
+print("Script execution complete.")
