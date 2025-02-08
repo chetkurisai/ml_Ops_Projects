@@ -5,7 +5,7 @@ from sklearn.compose import ColumnTransformer
 import joblib
 import numpy as np
 import os
-
+import gcsfs
 
 BUCKET_NAME = "ml_bucket_p1"
 FILE_NAME = "BostonHousing.csv"
@@ -13,8 +13,15 @@ GCS_PATH = f"gs://{BUCKET_NAME}/{FILE_NAME}"
 
 print(f"Loading data from {GCS_PATH}")
 
+# Load preprocessor from GCS
+fs = gcsfs.GCSFileSystem()
+# PREPROCESSOR_PATH = f"gs://{BUCKET_NAME}/preprocessor.joblib"
+
 # Load dataset
 # df_path = r"D:\ml_prjects\Data Sets\BostonHousing.csv"
+
+with fs.open(GCS_PATH, "rb") as f:
+    df = pd.read_csv(f)
 
 if not os.path.exists(GCS_PATH):
     raise FileNotFoundError(f"Dataset not found at {GCS_PATH}")
