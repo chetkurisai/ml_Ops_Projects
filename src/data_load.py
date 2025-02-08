@@ -5,21 +5,35 @@ from sklearn.compose import ColumnTransformer
 import joblib
 import numpy as np
 import os
-from google.cloud import bigquery
 import gcsfs
 
-# GCS Bucket Details
 BUCKET_NAME = "ml_bucket_p1"
 FILE_NAME = "BostonHousing.csv"
 GCS_PATH = f"gs://{BUCKET_NAME}/{FILE_NAME}"
 
 print(f"Loading data from {GCS_PATH}")
 
-# Load dataset from GCS
-try:
-    df = pd.read_csv(GCS_PATH, storage_options={"token": "google_default"})
-except Exception as e:
-    raise FileNotFoundError(f"Dataset not found at {GCS_PATH}. Error: {e}")
+# Load preprocessor from GCS
+fs = gcsfs.GCSFileSystem()
+# PREPROCESSOR_PATH = f"gs://{BUCKET_NAME}/preprocessor.joblib"
+
+# Load dataset
+# df_path = r"D:\ml_prjects\Data Sets\BostonHousing.csv"
+
+# with fs.open(GCS_PATH, "rb") as f:
+#     df = pd.read_csv(f)
+
+import pandas as pd
+import gcsfs
+
+fs = gcsfs.GCSFileSystem(project='mlflow-0438')
+with fs.open('ml_bucket_p1/BostonHousing.csv') as f:
+    df = pd.read_csv(f)
+
+if not os.path.exists(GCS_PATH):
+    raise FileNotFoundError(f"Dataset not found at {GCS_PATH}")
+
+df = pd.read_csv(GCS_PATH)
 
 # Define features and target
 X = df.drop(columns=["medv"])
@@ -38,66 +52,21 @@ preprocessor = ColumnTransformer(
 X_train_processed = preprocessor.fit_transform(X_train)
 X_test_processed = preprocessor.transform(X_test)
 
-# Save preprocessor and data locally
+# Save preprocessor and data
 output_dir = "data/processed_sai"
 os.makedirs(output_dir, exist_ok=True)
 
-# Saving preprocessor locally
-preprocessor_path = os.path.join(output_dir, "preprocessor.joblib")
-joblib.dump(preprocessor, preprocessor_path)
+joblib.dump(preprocessor, os.path.join(output_dir, "preprocessor.joblib"))
 
-# Saving processed data locally
 np.save(os.path.join(output_dir, "X_train.npy"), X_train_processed)
 np.save(os.path.join(output_dir, "y_train.npy"), y_train.values)
 np.save(os.path.join(output_dir, "X_test.npy"), X_test_processed)
 np.save(os.path.join(output_dir, "y_test.npy"), y_test.values)
 
-print("Data preprocessing complete.")
-print(f"Preprocessor saved locally at {preprocessor_path}")
 
-### === Upload Processed Data to BigQuery === ###
-
-# BigQuery details
-PROJECT_ID = "mlflow-0438"
 DATASET_ID = "house_price"
 TABLE_NAME = "price_table"
 
-TABLE_ID = f"{PROJECT_ID}.{DATASET_ID}.{TABLE_NAME}"
+TABLE_ID = f'{DATASET_ID}.{TABLE_NAME}'
 
-# Convert processed training data into a DataFrame for BigQuery
-df_train = pd.DataFrame(X_train_processed, columns=numeric_features)
-df_train["medv"] = y_train.values  # Add target column
-
-# Initialize BigQuery client
-client = bigquery.Client()
-
-# Define BigQuery schema
-schema = [
-    bigquery.SchemaField(name, "FLOAT") for name in numeric_features
-] + [bigquery.SchemaField("medv", "FLOAT")]
-
-# Load data into BigQuery
-job_config = bigquery.LoadJobConfig(schema=schema, write_disposition="WRITE_TRUNCATE")
-
-try:
-    job = client.load_table_from_dataframe(df_train, TABLE_ID, job_config=job_config)
-    job.result()  # Wait for the job to complete
-    print(f"Data successfully uploaded to BigQuery table {TABLE_ID}")
-except Exception as e:
-    print(f"Failed to upload data to BigQuery. Error: {e}")
-
-### === Optional: Upload Preprocessor to Google Cloud Storage === ###
-
-# GCS details for storing the preprocessor
-GCS_FS = gcsfs.GCSFileSystem(project="mlflow-0438")  # Replace with your actual project ID
-GCS_PREPROCESSOR_PATH = f"gs://{BUCKET_NAME}/preprocessor.joblib"
-
-# Upload preprocessor to GCS
-try:
-    with GCS_FS.open(GCS_PREPROCESSOR_PATH, 'wb') as f:
-        joblib.dump(preprocessor, f)
-    print(f"Preprocessor uploaded to GCS at {GCS_PREPROCESSOR_PATH}")
-except Exception as e:
-    print(f"Failed to upload preprocessor to GCS. Error: {e}")
-
-print("Script execution complete.")
+print("Data preprocessing complete.")
