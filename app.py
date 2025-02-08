@@ -36,8 +36,6 @@ st.sidebar.header("Enter House Features")
 for col in columns:
     feature_inputs[col] = st.sidebar.number_input(f"{col}", value=0.0)
 
-
-
 # Predict Button
 if st.sidebar.button("Predict"):
     input_data = pd.DataFrame([feature_inputs])  # Convert to DataFrame for prediction
