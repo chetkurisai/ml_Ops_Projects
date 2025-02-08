@@ -20,7 +20,14 @@ fs = gcsfs.GCSFileSystem()
 # Load dataset
 # df_path = r"D:\ml_prjects\Data Sets\BostonHousing.csv"
 
-with fs.open(GCS_PATH, "rb") as f:
+# with fs.open(GCS_PATH, "rb") as f:
+#     df = pd.read_csv(f)
+
+import pandas as pd
+import gcsfs
+
+fs = gcsfs.GCSFileSystem(project='mlflow-0438')
+with fs.open('ml_bucket_p1/BostonHousing.csv') as f:
     df = pd.read_csv(f)
 
 if not os.path.exists(GCS_PATH):
