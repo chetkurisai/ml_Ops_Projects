@@ -2,22 +2,22 @@ from sklearn.ensemble import RandomForestRegressor
 import joblib
 import os
 import numpy as np
-from google.cloud import bigquery, storage
+from google.cloud import bigquery, storage, aiplatform
 import pandas as pd
-import argparse
 import gcsfs
 
 # GCP Configuration
 PROJECT_ID = "mlflow-0438"
+BUCKET_NAME = "ml_bucket_p1"
 DATASET_ID = "house_price"
 TABLE_NAME = "price_table"
-BUCKET_NAME = "ml_bucket_p1"
-MODEL_OUTPUT_PATH = f"gs://{BUCKET_NAME}/model"
+MODEL_NAME = "boston_housing_model"
+REGION = "us-central1"
+
+MODEL_PATH = f"gs://{BUCKET_NAME}/{MODEL_NAME}.joblib"
 
 # Initialize BigQuery Client
 client = bigquery.Client()
-
-# Load training data from BigQuery
 QUERY = f"SELECT * FROM `{PROJECT_ID}.{DATASET_ID}.{TABLE_NAME}`"
 df_train = client.query(QUERY).to_dataframe()
 
@@ -41,13 +41,13 @@ model.fit(X_train_processed, y_train)
 
 # Save model locally
 os.makedirs("model", exist_ok=True)
-model_path = "model/boston_housing_model.joblib"
-joblib.dump(model, model_path)
+local_model_path = "model/boston_housing_model.joblib"
+joblib.dump(model, local_model_path)
 
 # Upload model to GCS
 storage_client = storage.Client()
 bucket = storage_client.bucket(BUCKET_NAME)
-blob = bucket.blob("model/boston_housing_model.joblib")
-blob.upload_from_filename(model_path)
+blob = bucket.blob(f"{MODEL_NAME}.joblib")
+blob.upload_from_filename(local_model_path)
 
-print(f"Model trained and uploaded to {MODEL_OUTPUT_PATH}/boston_housing_model.joblib")
+print(f"Model trained and uploaded to {MODEL_PATH}")
