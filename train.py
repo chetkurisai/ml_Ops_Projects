@@ -51,5 +51,3 @@ blob = bucket.blob("model/boston_housing_model.joblib")
 blob.upload_from_filename(model_path)
 
 print(f"Model trained and uploaded to {MODEL_OUTPUT_PATH}/boston_housing_model.joblib")
-
-
